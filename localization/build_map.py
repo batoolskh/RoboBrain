@@ -67,9 +67,12 @@ def main(cfg):
         print(f"Mean error: {np.mean(errors)*100:.1f} cm   Median: {np.median(errors)*100:.1f} cm")
 
     with open(os.path.join(cfg["out_dir"], "object_map.json"), "w") as f:
-        json.dump({"config": cfg, "objects": report}, f, indent=2)
+        json.dump({"config": cfg, "objects": report,
+                   "reachable": [[p["x"], p["z"]] for p in positions],
+                   "ground_truth": [{"cls": g["objectType"], "position": center(g)}
+                                    for g in ground_truth
+                                    if g["objectType"] in localizer.model.names.values()]},
+                  f, indent=2)
     print(f"Saved map to {cfg['out_dir']}/object_map.json")
-
-
 if __name__ == "__main__":
     main(CONFIG)
