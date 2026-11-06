@@ -1,21 +1,39 @@
-"""Run one robot skill.
+"""Run a robot skill.
 
-Usage:  python do.py <skill> <Object> [Scene]
-Skills: pickup | on | off
-Example: python do.py on Television FloorPlan201
+Usage:
+  python do.py pickup <Object> [Scene]
+  python do.py on|off <Object> [Scene]
+  python do.py move <Object> <Receptacle> [Scene]
+
+Examples:
+  python do.py on Television FloorPlan201
+  python do.py move Laptop Sofa FloorPlan203
 """
 import sys
 from skills import Robot
 
-SKILLS = {"pickup": "pick_up", "on": "switch_on", "off": "switch_off"}
+NARGS = {"pickup": 1, "on": 1, "off": 1, "move": 2}
 
-if len(sys.argv) < 3 or sys.argv[1] not in SKILLS:
+args = sys.argv[1:]
+if not args or args[0] not in NARGS or len(args) < 1 + NARGS[args[0]]:
     print(__doc__)
     sys.exit(1)
 
-skill, target = sys.argv[1], sys.argv[2]
-robot = Robot(**({"scene": sys.argv[3]} if len(sys.argv) > 3 else {}))
+skill = args[0]
+targets = args[1:1 + NARGS[skill]]
+rest = args[1 + NARGS[skill]:]
+
+robot = Robot(**({"scene": rest[0]} if rest else {}))
 robot.explore()
-ok = getattr(robot, SKILLS[skill])(target)
+
+if skill == "pickup":
+    ok = robot.pick_up(targets[0])
+elif skill == "on":
+    ok = robot.switch_on(targets[0])
+elif skill == "off":
+    ok = robot.switch_off(targets[0])
+else:  # move = pick up, then put down
+    ok = robot.pick_up(targets[0]) and robot.put(targets[1])
+
 print("DONE" if ok else "FAILED")
 robot.close()

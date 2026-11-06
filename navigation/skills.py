@@ -1,4 +1,4 @@
-"""RoboBrain skills: explore, find, go to, look at, pick up, switch on/off."""
+"""RoboBrain skills: explore, find, go to, look at, pick up, switch on/off, put."""
 import os, sys, math, random
 from PIL import Image
 from ai2thor.controller import Controller
@@ -37,7 +37,8 @@ class Robot:
         self.positions = self.c.step(action="GetReachablePositions").metadata["actionReturn"]
         self.grid = GridMap(self.positions)
         self.map = ObjectMap(merge_dist=0.3, min_sightings=2)
-        self.home = None   # where the user is (the robot's starting cell)
+        self.home = None       # where the user is (the robot's starting cell)
+        self.last_box = None   # last YOLO box seen by verify(), normalized 0-1
 
     # ---------- basics ----------
     @property
@@ -81,10 +82,13 @@ class Robot:
         e = self.c.last_event
         r = self.loc.model(e.frame[:, :, ::-1].copy(), conf=self.cfg["verify_conf"], verbose=False)[0]
         boxes = [b for b in r.boxes if self.loc.model.names[int(b.cls)] == cls]
+        self.last_box = None
         if not boxes:
             return False, est_pos
         b = max(boxes, key=lambda b: float(b.conf))
         x1, y1, x2, y2 = b.xyxy[0].tolist()
+        s = self.cfg["size"]
+        self.last_box = (x1 / s, y1 / s, x2 / s, y2 / s)
         d = self.loc.box_depth(e.depth_frame, x1, y1, x2, y2)
         if d:
             est_pos = self.loc.pixel_to_world((x1 + x2) / 2, (y1 + y2) / 2, d, e.metadata)
@@ -142,6 +146,8 @@ class Robot:
             if cands:
                 obj = min(cands, key=lambda o: math.dist(pos, tuple(o["position"][k] for k in "xyz")))
                 ok = self.c.step(action=action, objectId=obj["objectId"]).metadata["lastActionSuccess"]
+            if not ok and action == "PutObject" and self.last_box:
+                ok = self.put_at_box()
             print(f"  attempt {i}: {steps} steps, YOLO saw it: {seen}, {action}: {'OK' if ok else 'failed'}")
             if ok:
                 self.snapshot(f"{action}_{cls}.jpg")
@@ -157,3 +163,25 @@ class Robot:
 
     def switch_off(self, cls):
         return self.interact(cls, "ToggleObjectOff", "toggleable")
+
+    def holding(self):
+        """Type of the object in the robot's hand, or None."""
+        inv = self.meta["inventoryObjects"]
+        return inv[0]["objectType"] if inv else None
+
+    def put(self, receptacle):
+        """Put the held object on or in a receptacle (sofa, table, ...)."""
+        if not self.holding():
+            print("Not holding anything.")
+            return False
+        return self.interact(receptacle, "PutObject", "receptacle")
+
+    def put_at_box(self):
+        """Fallback: aim at points inside the receptacle's YOLO box and put there."""
+        x1, y1, x2, y2 = self.last_box
+        for fy in (0.5, 0.65, 0.35, 0.8):
+            for fx in (0.5, 0.3, 0.7):
+                x, y = x1 + fx * (x2 - x1), y1 + fy * (y2 - y1)
+                if self.c.step(action="PutObject", x=x, y=y).metadata["lastActionSuccess"]:
+                    return True
+        return False
