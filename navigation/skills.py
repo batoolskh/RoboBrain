@@ -11,7 +11,7 @@ from planner import GridMap, astar, path_to_actions, to_cell, to_xz
 
 DEFAULTS = {
     "scene": "FloorPlan5",
-    "model": os.path.join(HERE, "..", "object-detection", "models", "best_v2.pt"),
+    "model": os.path.join(HERE, "..", "object-detection", "models", "best_v3.pt"),
     "size": 600, "fov": 90,
     "n_views": 60,          # viewpoints while exploring
     "seed": 42,
