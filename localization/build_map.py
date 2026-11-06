@@ -7,7 +7,7 @@ from localizer import ObjectLocalizer, ObjectMap
 
 CONFIG = {
     "scene": "FloorPlan5",
-    "model": "../object-detection/models/best.pt",
+    "model": "../object-detection/models/best_v2.pt",
     "size": 600,           # square images keep the camera math simple
     "fov": 90,
     "n_views": 30,         # random viewpoints to explore
