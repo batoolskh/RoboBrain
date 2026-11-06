@@ -73,8 +73,14 @@ class Robot:
         print("Found:", ", ".join(sorted({o["cls"] for o in self.map.confirmed()})))
 
     def find(self, cls):
-        """Best map entry for a class (most sightings), or None."""
+        """Best map entry for a class (most sightings), or None.
+        If the class is missing, fall back to an object that is always next to it."""
+        nearby = {"SinkBasin": "Faucet", "Faucet": "SinkBasin"}
         hits = [o for o in self.map.confirmed() if o["cls"] == cls]
+        if not hits and cls in nearby:
+            hits = [o for o in self.map.confirmed() if o["cls"] == nearby[cls]]
+            if hits:
+                print(f"  {cls} not in the map, going to the {nearby[cls]} next to it")
         return max(hits, key=lambda o: o["sightings"]) if hits else None
 
     def verify(self, cls, est_pos):
@@ -185,3 +191,28 @@ class Robot:
                 if self.c.step(action="PutObject", x=x, y=y).metadata["lastActionSuccess"]:
                     return True
         return False
+
+    def return_home(self):
+        """Drive back to the user (the robot's starting cell)."""
+        steps = self.go(self.home)
+        print(f"  back to the user: {steps} steps")
+        return steps is not None
+
+    def fill_water(self, cls):
+        """Fill the held container: put it in the sink, run the faucet, take it back."""
+        if self.holding() != cls:
+            print(f"Not holding a {cls}.")
+            return False
+        held = self.meta["inventoryObjects"][0]["objectId"]
+        if not self.put("SinkBasin"):
+            return False
+        if not self.switch_on("Faucet"):
+            return False
+        self.snapshot("filling.jpg")
+        self.switch_off("Faucet")
+        obj = next(o for o in self.meta["objects"] if o["objectId"] == held)
+        print(f"  {cls} filled: {obj['isFilledWithLiquid']} ({obj.get('fillLiquid')})")
+        self.look_at(tuple(obj["position"][k] for k in "xyz"))
+        ok = self.c.step(action="PickupObject", objectId=held).metadata["lastActionSuccess"]
+        print(f"  took the {cls} back: {ok}")
+        return ok and obj["isFilledWithLiquid"]
