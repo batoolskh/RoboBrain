@@ -42,3 +42,30 @@ Builds on the object map from [localization](../localization).
 ## Run
 cd navigation
 python fetch.py
+
+## Update: 20-class model + camera tilt fix
+
+### Camera tilt fix
+The robot never tilted its camera down: `LookDown` with arbitrary degrees was not applied, so the tilt stayed at 0° and low objects were out of view. `face()` now sets heading and tilt directly, clamped to the allowed range (-30° to 60°). The plate that failed 6 attempts was then picked up on the first attempt.
+
+| Before (tilt 0°) | After (tilt 58°) |
+|---|---|
+| ![](images/before_fix.jpg) | ![](images/after_fix.jpg) |
+
+### Tests with the v2 model (after the fix)
+
+| Scene | Target | Localization error | Steps | YOLO confirmed | Result |
+|---|---|---|---|---|---|
+| FloorPlan5 (kitchen) | Plate | 2 cm | 17 | no | success, attempt 1 |
+| FloorPlan203 (living room) | Laptop | 11 cm | 40 | yes | success, attempt 1 |
+| FloorPlan201 (living room) | RemoteControl | map entry 3.6 m from the real remote | – | – | failed after 6 attempts |
+
+The RemoteControl failure came from a false map entry (likely a book: the confusion matrix shows Book→RemoteControl 14%). The robot did not grab the wrong object.
+
+### Known issues / next steps
+- Close-range verification: steep top-down views (50–60°) are missing from the training data → add such images.
+- False map entries for small objects → require 3 sightings for small classes; after failing all attempts, mark the entry as false and try the next candidate.
+- Large rooms need more exploration (`n_views` = 80).
+
+### Usage
+python fetch.py <Target> [Scene]

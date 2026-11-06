@@ -14,16 +14,16 @@ from planner import GridMap, astar, path_to_actions, to_cell, to_xz
 CONFIG = {
     "scene": "FloorPlan5",
     "target": "Apple",
-    "model": "../object-detection/models/best.pt",
+    "model": "../object-detection/models/best_v2.pt",
     "size": 600,
     "fov": 90,
-    "n_views": 40,
+    "n_views": 80,
     "seed": 42,
     "conf": 0.5,
     "verify_conf": 0.25,    # lower threshold when confirming a target we expect to see
-    "reach": 1.0,           # max distance (m) from the robot to the object to grab it
+    "reach": 1.3,           # max distance (m) from the robot to the object to grab it
     "min_start_dist": 2.0,  # start at least this far from the target (m)
-    "max_attempts": 3,      # approach cells to try before giving up
+    "max_attempts": 6,      # approach cells to try before giving up
     "out_dir": "output",
 }
 
@@ -56,16 +56,18 @@ def reset_view(c):
 
 
 def face(c, target_pos):
-    """Turn and tilt the camera toward a 3D point."""
+    """Turn and tilt the camera toward a 3D point, in place."""
     m = c.last_event.metadata
-    dx = target_pos[0] - m["agent"]["position"]["x"]
-    dz = target_pos[2] - m["agent"]["position"]["z"]
-    turn = (math.degrees(math.atan2(dx, dz)) - m["agent"]["rotation"]["y"] + 540) % 360 - 180
-    c.step(action="RotateRight" if turn > 0 else "RotateLeft", degrees=abs(turn))
-    m = c.last_event.metadata
+    a = m["agent"]["position"]
+    dx, dz = target_pos[0] - a["x"], target_pos[2] - a["z"]
+    yaw = math.degrees(math.atan2(dx, dz)) % 360
     pitch = math.degrees(math.atan2(m["cameraPosition"]["y"] - target_pos[1], math.hypot(dx, dz)))
-    pitch -= m["agent"]["cameraHorizon"]
-    return c.step(action="LookDown" if pitch > 0 else "LookUp", degrees=abs(pitch))
+    pitch = max(-30, min(60, pitch))  # camera can only tilt between -30 and 60 degrees
+    e = c.step(action="TeleportFull", position=a, rotation=dict(x=0, y=yaw, z=0),
+               horizon=pitch, standing=True)
+    if not e.metadata["lastActionSuccess"]:
+        print("  face failed:", e.metadata["errorMessage"][:80])
+    return e
 
 
 def pick_up(c, localizer, target, est_pos):
@@ -108,6 +110,8 @@ def plot(grid, path, start, obj_pos, target, out):
 def main(cfg):
     random.seed(cfg["seed"])
     os.makedirs(cfg["out_dir"], exist_ok=True)
+    for f in os.listdir(cfg["out_dir"]):
+        os.remove(os.path.join(cfg["out_dir"], f))
     localizer = ObjectLocalizer(YOLO(cfg["model"]), cfg["size"], cfg["size"], cfg["fov"], cfg["conf"])
     c = Controller(scene=cfg["scene"], width=cfg["size"], height=cfg["size"],
                    fieldOfView=cfg["fov"], renderDepthImage=True, gridSize=0.25)
@@ -152,6 +156,8 @@ def main(cfg):
                 break
         full_path += path[1:]
         face(c, target["position"])
+        tg = [o for o in c.last_event.metadata["objects"] if o["objectType"] == cfg["target"]]
+        print(f"  camera tilt {c.last_event.metadata['agent']['cameraHorizon']:.0f} deg, simulator sees it: {[o['visible'] for o in tg]}")
         Image.fromarray(c.last_event.frame).save(os.path.join(cfg["out_dir"], f"before_pickup_{attempt}.jpg"))
         ok, seen = pick_up(c, localizer, cfg["target"], target["position"])
         gx, gz = to_xz(goal)
@@ -167,4 +173,8 @@ def main(cfg):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        CONFIG["target"] = sys.argv[1]
+    if len(sys.argv) > 2:
+        CONFIG["scene"] = sys.argv[2]
     main(CONFIG)
