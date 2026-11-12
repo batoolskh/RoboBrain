@@ -4,18 +4,18 @@ import json, re, urllib.request
 OLLAMA_URL = "http://192.168.56.1:11434/api/chat"
 MODEL = "qwen3.5:4b"
 
-# action -> the capability an object needs for it (from object_capabilities.json)
-ACTIONS = {"bring": "pickup", "turn_on": "toggle", "turn_off": "toggle",
-           "open": "open", "close": "open"}
+# action -> capability the object needs (from object_capabilities.json)
+ACTIONS = {"bring": "pickup", "water": "pickup", "turn_on": "toggle", "turn_off": "toggle"}
+WATER_CONTAINERS = ["Mug", "Cup"]   # what the robot can fill at the sink
 
-# Few-shot examples: teach the style, the dialect, and honesty
+# Few-shot examples: teach the style, the Syrian dialect, and honesty
 EXAMPLES = [
     ("عطشانة",
-     {"reply": "من عيوني، رح جبلك كاسة تشربي فيها.",
-      "actions": [{"action": "bring", "object": "Mug"}]}),
+     {"reply": "من عيوني، رح عبّيلك كاسة مي وجبلك ياها.",
+      "actions": [{"action": "water", "object": "Mug"}]}),
     ("راسي عم يوجعني",
      {"reply": "سلامتك! للأسف ما عندي دوا، بس رح جبلك كاسة مي يمكن تريّحك.",
-      "actions": [{"action": "bring", "object": "Cup"}]}),
+      "actions": [{"action": "water", "object": "Cup"}]}),
     ("بدي اتفرج عالتلفزيون",
      {"reply": "تكرم عينك، رح شغّلك التلفزيون وجبلك الريموت.",
       "actions": [{"action": "turn_on", "object": "Television"},
@@ -26,7 +26,7 @@ EXAMPLES = [
                   {"action": "bring", "object": "Knife"},
                   {"action": "bring", "object": "Bowl"}]}),
     ("جبلي الكنباية",
-     {"reply": "الكنباية تقيلة كتير عليّ، ما بقدر شيلها. بس إذا بدك بجبلك مخدة.",
+     {"reply": "الكنباية تقيلة كتير عليّ، ما بقدر شيلها. بدك جبلك مخدة؟",
       "actions": []}),
 ]
 
@@ -41,8 +41,10 @@ class RobotBrain:
     def allowed_actions(self, available=None):
         """action -> objects it can be done to (only objects present in the house)."""
         objs = available or list(self.caps)
-        return {a: sorted(o for o in objs if self.caps.get(o, {}).get(cap))
-                for a, cap in ACTIONS.items()}
+        allowed = {a: sorted(o for o in objs if self.caps.get(o, {}).get(cap))
+                   for a, cap in ACTIONS.items()}
+        allowed["water"] = [o for o in allowed["water"] if o in WATER_CONTAINERS]
+        return allowed
 
     def _schema(self, allowed):
         options = [{"type": "object",
@@ -62,14 +64,20 @@ class RobotBrain:
         return f"""You are RoboBrain, the brain of a home-assistant robot.
 Understand what the user NEEDS, even if they don't name an object, and plan robot actions.
 
-Possible actions and the objects they work on (use ONLY these):
+Actions:
+- bring: pick the object up and bring it to the user
+- water: fill the container with water at the sink and bring it
+- turn_on / turn_off: switch a device on or off
+
+Objects each action works on (use ONLY these):
 {lines}
 
 Rules:
 - Never invent objects or actions.
+- Put in "actions" ONLY what the user asked for or clearly needs. Optional
+  suggestions go in the reply as a question, NOT in actions.
 - If the user needs something the robot can't do or doesn't have (medicine,
-  food that isn't listed, heavy furniture), say so kindly and offer the
-  closest useful help.
+  food that isn't listed, heavy furniture), say so kindly and offer help.
 - Never say the task is already done; say what you are going to do.
 - {lang}
 - If nothing fits, return an empty actions list."""
