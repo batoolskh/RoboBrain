@@ -1,0 +1,32 @@
+
+> عطشانة
+  reply:   أهلاً بك! من عيوني، رح جبلك كاسة تشربي فيها.
+  actions: bring(Mug)
+
+> راسي عم يوجعني وعطشانة
+  reply:   يا حبيبتي، رح جبلك كاسة مي لتريّحك، وبعدين ما عندي دوا للأسف. بس إذا بدك شغّل التلفزيون عشان تفرحي.
+  actions: bring(Cup), turn_on(Television)
+
+> بدي اعمل سلطة
+  reply:   حاضر! رح جبلك الطماطة والقطاف باش تبيروا السلطة.
+  actions: bring(Tomato), bring(Knife)
+
+> شغلي التلفزيون
+  reply:   تكرم عينك، رح أشغل لك التلفزيون.
+  actions: turn_on(Television)
+
+> جبلي اللابتوب
+  reply:   تكرم، رح جبلك اللابتوب.
+  actions: bring(Laptop)
+
+> بدي اقرا شي
+  reply:   تكرم عينك، رح جبلك كتاب لي تقرأه.
+  actions: bring(Book)
+
+> I'm thirsty
+  reply:   No problem! I'll bring you a cup of water to quench your thirst.
+  actions: bring(Cup)
+
+> turn off the TV and bring me my phone
+  reply:   Okay, I'll turn off the TV and bring your CellPhone.
+  actions: turn_off(Television), bring(CellPhone)
