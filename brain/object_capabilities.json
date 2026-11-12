@@ -1,0 +1,249 @@
+{
+  "Apple": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "ArmChair": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "Book": {
+    "pickup": true,
+    "toggle": false,
+    "open": true,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  },
+  "Bowl": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  },
+  "Box": {
+    "pickup": true,
+    "toggle": false,
+    "open": true,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "Bread": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "CellPhone": {
+    "pickup": true,
+    "toggle": true,
+    "open": false,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  },
+  "CoffeeMachine": {
+    "pickup": false,
+    "toggle": true,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "CoffeeTable": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "CounterTop": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Cup": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "DiningTable": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  },
+  "Faucet": {
+    "pickup": false,
+    "toggle": true,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Fridge": {
+    "pickup": false,
+    "toggle": false,
+    "open": true,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "GarbageCan": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  },
+  "Knife": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Laptop": {
+    "pickup": true,
+    "toggle": true,
+    "open": true,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "Microwave": {
+    "pickup": false,
+    "toggle": true,
+    "open": true,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Mug": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Pillow": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "Plate": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  },
+  "Pot": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "RemoteControl": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "SinkBasin": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Sofa": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "StoveBurner": {
+    "pickup": false,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Television": {
+    "pickup": false,
+    "toggle": true,
+    "open": false,
+    "rooms": [
+      "living_room"
+    ]
+  },
+  "Toaster": {
+    "pickup": false,
+    "toggle": true,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Tomato": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen"
+    ]
+  },
+  "Vase": {
+    "pickup": true,
+    "toggle": false,
+    "open": false,
+    "rooms": [
+      "kitchen",
+      "living_room"
+    ]
+  }
+}
