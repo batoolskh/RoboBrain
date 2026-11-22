@@ -17,13 +17,14 @@ import assistant   # loads the brain + robot skills (and moves into navigation/)
 
 brain, Robot, run_action = assistant.brain, assistant.Robot, assistant.run
 
-app = FastAPI(title="RoboBrain API", version="0.2.0")
+app = FastAPI(title="RoboBrain API", version="0.3.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"],     # let the React app call us
                    allow_methods=["*"], allow_headers=["*"])
 
 robot = None
 robot_lock = threading.Lock()     # the simulator can only do one thing at a time
-state = {"scene": None, "busy": False, "task": None}
+state = {"scene": None, "scene_status": "none",   # none | loading | ready | error
+         "busy": False, "task": None, "error": None}
 
 
 class ChatRequest(BaseModel):
@@ -40,6 +41,26 @@ def found_objects():
 
 def controller():
     return getattr(robot, "c", None) or getattr(robot, "controller", None)
+
+
+# ---------- background workers ----------
+
+def load_worker(scene):
+    """Open a room and explore it in the background."""
+    global robot
+    try:
+        with robot_lock:
+            if robot is not None:
+                robot.close()
+                robot = None
+            r = Robot(scene=scene)
+            r.explore()
+            robot = r
+        state["scene_status"] = "ready"
+    except Exception as e:
+        state["scene_status"], state["error"] = "error", str(e)
+    finally:
+        state["busy"] = False
 
 
 def execute(task):
@@ -61,32 +82,29 @@ def execute(task):
         state["busy"] = False
 
 
+# ---------- endpoints ----------
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "robot_ready": robot is not None,
-            "scene": state["scene"], "busy": state["busy"]}
+    return {"status": "ok", "scene": state["scene"],
+            "scene_status": state["scene_status"], "busy": state["busy"]}
 
 
 @app.post("/scene")
 def load_scene(req: SceneRequest):
-    """Open a room and let the robot explore it (takes ~1 minute)."""
-    global robot
+    """Start loading a room. Returns immediately; poll /status until scene_status is 'ready'."""
     if state["busy"]:
         raise HTTPException(409, "Robot is busy")
-    with robot_lock:
-        if robot is not None:
-            robot.close()
-        robot = Robot(scene=req.scene)
-        robot.explore()
-        state["scene"] = req.scene
-    return {"scene": req.scene, "objects": found_objects()}
+    state.update(scene=req.scene, scene_status="loading", busy=True, error=None, task=None)
+    threading.Thread(target=load_worker, args=(req.scene,), daemon=True).start()
+    return {"scene": req.scene, "scene_status": "loading"}
 
 
 @app.post("/chat")
 def chat(req: ChatRequest):
     """User request -> brain plan -> robot starts working in the background."""
-    if robot is None:
-        raise HTTPException(400, "Load a scene first: POST /scene")
+    if state["scene_status"] != "ready":
+        raise HTTPException(400, "No room ready yet: POST /scene and wait for 'ready'")
     if state["busy"]:
         raise HTTPException(409, "Robot is busy with another task")
     plan = brain.ask(req.text, found_objects())
@@ -104,15 +122,18 @@ def chat(req: ChatRequest):
 
 @app.get("/status")
 def status():
-    """What the robot is doing right now."""
-    return {"busy": state["busy"], "scene": state["scene"], "task": state["task"]}
+    """Everything the frontend needs to know right now."""
+    return {"busy": state["busy"], "scene": state["scene"],
+            "scene_status": state["scene_status"], "error": state["error"],
+            "objects": found_objects() if state["scene_status"] == "ready" else [],
+            "task": state["task"]}
 
 
 @app.get("/map")
 def get_map():
     """Objects the robot found + where the robot is."""
-    if robot is None:
-        raise HTTPException(400, "Load a scene first: POST /scene")
+    if state["scene_status"] != "ready":
+        raise HTTPException(400, "No room ready yet")
     agent = robot.meta()["agent"]
     return {"robot": {"x": agent["position"]["x"], "z": agent["position"]["z"],
                       "rotation": agent["rotation"]["y"]},
@@ -125,7 +146,7 @@ def frame():
     """Live camera image (JPEG)."""
     c = controller()
     if c is None or c.last_event is None:
-        raise HTTPException(400, "No camera yet: POST /scene first")
+        raise HTTPException(400, "No camera yet")
     buf = io.BytesIO()
     Image.fromarray(c.last_event.frame).save(buf, format="JPEG", quality=80)
     return Response(buf.getvalue(), media_type="image/jpeg")
