@@ -1,0 +1,77 @@
+[
+  {
+    "input": "راسي عم يوجعني",
+    "reply": "أنا آسف، رح أقترح أن تأخذ قسطًا من الراحة.",
+    "intent": "health_tips",
+    "plan": [],
+    "dropped": 0
+  },
+  {
+    "input": "أنا عطشانة",
+    "reply": "تكرم، رح افتح الماء من الص lavet لكي.",
+    "intent": "drink_water",
+    "plan": [
+      {
+        "skill": "open",
+        "object": "Sink"
+      }
+    ],
+    "dropped": 0
+  },
+  {
+    "input": "بردانة",
+    "reply": "تفضل، سأحضر لك قنينة ماء.",
+    "intent": "drink_water",
+    "plan": [
+      {
+        "skill": "fetch",
+        "object": "Bottle"
+      }
+    ],
+    "dropped": 0
+  },
+  {
+    "input": "بدي شي آكله",
+    "reply": "تفضل تختار من الاطعمة المتاحة: الخبز، الطماطم، البيض، السبانخ.",
+    "intent": "food_choice",
+    "plan": [
+      {
+        "skill": "fetch",
+        "object": "Apple"
+      },
+      {
+        "skill": "fetch",
+        "object": "Bread"
+      },
+      {
+        "skill": "fetch",
+        "object": "Tomato"
+      },
+      {
+        "skill": "fetch",
+        "object": "Egg"
+      },
+      {
+        "skill": "fetch",
+        "object": "Lettuce"
+      }
+    ],
+    "dropped": 0
+  },
+  {
+    "input": "I'm thirsty",
+    "reply": "تكرم، رح افتح البراد وجيبلك قنينة ماء.",
+    "intent": "drink_water",
+    "plan": [
+      {
+        "skill": "open",
+        "object": "Fridge"
+      },
+      {
+        "skill": "fetch",
+        "object": "Bottle"
+      }
+    ],
+    "dropped": 0
+  }
+]

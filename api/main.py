@@ -134,7 +134,7 @@ def get_map():
     """Objects the robot found + where the robot is."""
     if state["scene_status"] != "ready":
         raise HTTPException(400, "No room ready yet")
-    agent = robot.meta()["agent"]
+    agent = robot.meta["agent"]
     return {"robot": {"x": agent["position"]["x"], "z": agent["position"]["z"],
                       "rotation": agent["rotation"]["y"]},
             "objects": [{"cls": o["cls"], "position": list(o["position"]),

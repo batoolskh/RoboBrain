@@ -1,6 +1,6 @@
 """RoboBrain assistant: user request -> LLM plan -> robot executes it in AI2-THOR.
 
-Usage:  python assistant.py [Scene]      e.g.  python assistant.py FloorPlan201
+Usage:  python assistant.py [Scene]      e.g.  python assistant.py FloorPlan5
 """
 import os, sys
 
@@ -15,8 +15,26 @@ os.chdir(os.path.join(ROOT, "navigation"))   # skills.py uses paths relative to 
 from skills import Robot
 
 
+def drop(robot):
+    """Hand the held object to the user to free the robot's hand.
+
+    In the simulator we drop it and then hide it (DisableObject), as if the user
+    took it. Leaving it on the floor would block the robot's path next time.
+    """
+    inv = robot.meta["inventoryObjects"]
+    if not inv:
+        return True
+    obj_id, obj_type = inv[0]["objectId"], inv[0]["objectType"]
+    robot.c.step(action="DropHandObject", forceAction=True)
+    ok = robot.c.step(action="DisableObject", objectId=obj_id).metadata["lastActionSuccess"]
+    print(f"  handed the {obj_type} to the user: {'OK' if ok else 'FAILED'}")
+    return ok
+
 def run(robot, action, obj):
     """Translate one brain action into robot skills."""
+    if action in ("bring", "water") and robot.holding():
+        if not drop(robot):          # hand is full and we couldn't free it
+            return False
     if action == "bring":
         return robot.pick_up(obj) and robot.return_home()
     if action == "water":
@@ -33,13 +51,14 @@ def main():
     robot = Robot(**({"scene": scene} if scene else {}))
     print("Exploring the house...")
     robot.explore()
+    available = sorted({o["cls"] for o in robot.map.confirmed()})
     print("Ready! Type a request (empty line to quit).")
     try:
         while True:
             text = input("\nYou: ").strip()
             if not text:
                 break
-            plan = brain.ask(text)
+            plan = brain.ask(text, available)
             print("Robot:", plan["reply"])
             for step in plan["actions"]:
                 a, o = step["action"], step["object"]
