@@ -1,0 +1,14 @@
+{
+  "accuracy": 0.78,
+  "language_accuracy": 1.0,
+  "mean_seconds": 10.1,
+  "by_category": {
+    "direct": "10/10",
+    "need": "6/12",
+    "multi": "8/8",
+    "impossible": "6/10",
+    "unclear": "4/5",
+    "chat": "5/5"
+  },
+  "n": 50
+}

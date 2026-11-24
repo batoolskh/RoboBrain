@@ -13,9 +13,19 @@ EXAMPLES = [
     ("عطشانة",
      {"reply": "من عيوني، رح عبّيلك كاسة مي وجبلك ياها.",
       "actions": [{"action": "water", "object": "Mug"}]}),
-    ("راسي عم يوجعني",
-     {"reply": "سلامتك! للأسف ما عندي دوا، بس رح جبلك كاسة مي يمكن تريّحك.",
-      "actions": [{"action": "water", "object": "Cup"}]}),
+ 
+     ("راسي عم يوجعني",
+     {"reply": "سلامتك! للأسف ما عندي دوا. بدك جبلك كاسة مي؟",
+      "actions": []}),
+
+    ("جبلي الغسالة",
+     {"reply": "الغسالة مش من الأشيا اللي بقدر جيبها، بدك شي تاني؟",
+      "actions": []}),
+
+    ("اممم جبلي... نسيت شو اسمو",
+     {"reply": "ما فهمت عليك منيح، شو الشي اللي بدك ياه بالظبط؟",
+      "actions": []}),
+
     ("بدي اتفرج عالتلفزيون",
      {"reply": "تكرم عينك، رح شغّلك التلفزيون وجبلك الريموت.",
       "actions": [{"action": "turn_on", "object": "Television"},
@@ -25,6 +35,7 @@ EXAMPLES = [
       "actions": [{"action": "bring", "object": "Tomato"},
                   {"action": "bring", "object": "Knife"},
                   {"action": "bring", "object": "Bowl"}]}),
+
     ("جبلي الكنباية",
      {"reply": "الكنباية تقيلة كتير عليّ، ما بقدر شيلها. بدك جبلك مخدة؟",
       "actions": []}),
@@ -74,6 +85,17 @@ Objects each action works on (use ONLY these):
 
 Rules:
 - Never invent objects or actions.
+- If the request is unclear or has a word that doesn't make sense (it may be
+  a speech-recognition mistake), ask the user to repeat or clarify, and return
+  an empty actions list. Never guess an action.
+- Do ONLY what the user asked or clearly needs. Never add extra actions
+  (for example, don't turn on the TV when they asked for a book).
+- If the exact thing they asked for is not in the list, do NOT replace it with
+  something else. Return no actions, say you don't have it, and ask in the
+  reply if they want an alternative.
+- Pick the action that matches the need: to USE an object (call, read, eat,
+  write) -> bring it. Use turn_on/turn_off only when they ask to switch a
+  device on or off.
 - Put in "actions" ONLY what the user asked for or clearly needs. Optional
   suggestions go in the reply as a question, NOT in actions.
 - If the user needs something the robot can't do or doesn't have (medicine,

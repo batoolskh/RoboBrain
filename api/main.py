@@ -3,9 +3,10 @@
 Run:  uvicorn main:app --host 0.0.0.0 --port 8000
 Docs: http://<ubuntu-ip>:8000/docs
 """
-import io, os, sys, threading, time, uuid
+import io, os, sys, threading, time, uuid, tempfile
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from faster_whisper import WhisperModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -119,6 +120,29 @@ def chat(req: ChatRequest):
         threading.Thread(target=execute, args=(task,), daemon=True).start()
     return task
 
+
+HINT = ("شغلي التلفزيون، طفي التلفزيون، جبلي كاسة مي، عطشانة، جوعان، "
+        "جبلي الكتاب، جبلي اللابتوب، turn on the TV, bring me water")
+stt = WhisperModel("small", device="cpu", compute_type="int8")   # speech-to-text
+
+
+@app.post("/voice")
+def voice(audio: UploadFile = File(...)):
+    """Voice request: audio -> text (Whisper) -> same as /chat."""
+    suffix = os.path.splitext(audio.filename or "")[1] or ".webm"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+        f.write(audio.file.read())
+        path = f.name
+    try:
+        segments, info = stt.transcribe(path, beam_size=5, vad_filter=True, initial_prompt=HINT)
+        text = " ".join(s.text.strip() for s in segments).strip()
+    finally:
+        os.remove(path)
+    if not text:
+        raise HTTPException(400, "Couldn't hear anything, please try again")
+    print(f"Heard ({info.language}): {text}")
+    task = chat(ChatRequest(text=text))
+    return {"heard": text, "language": info.language, **task}
 
 @app.get("/status")
 def status():
