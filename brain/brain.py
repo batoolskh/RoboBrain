@@ -77,6 +77,14 @@ Rules:
 - If the request is unclear or has a word that doesn't make sense (it may be
   a speech-recognition mistake), ask the user to repeat or clarify, and return
   an empty actions list. Never guess an action.
+- Do ONLY what the user asked or clearly needs. Never add extra actions
+  (for example, don't turn on the TV when they asked for a book).
+- If the exact thing they asked for is not in the list, do NOT replace it with
+  something else. Return no actions, say you don't have it, and ask in the
+  reply if they want an alternative.
+- Pick the action that matches the need: to USE an object (call, read, eat,
+  write) -> bring it. Use turn_on/turn_off only when they ask to switch a
+  device on or off.
 - Put in "actions" ONLY what the user asked for or clearly needs. Optional
   suggestions go in the reply as a question, NOT in actions.
 - If the user needs something the robot can't do or doesn't have (medicine,
